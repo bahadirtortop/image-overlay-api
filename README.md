@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Image Text Overlay API
 
-## Getting Started
+Görseller üzerine Türkçe karakter ve emoji destekli metin ekleme API'si.
 
-First, run the development server:
+## 🚀 Özellikler
+
+- ✅ Türkçe karakter desteği (İ, Ş, Ğ, Ü, Ö, Ç)
+- ✅ Emoji desteği 🎉
+- ✅ Özelleştirilebilir font boyutu
+- ✅ Arka plan rengi ve opaklık
+- ✅ Kenarlık (stroke) ekleme
+- ✅ Gölge efekti
+- ✅ Text hizalama (sol, orta, sağ)
+- ✅ Pozisyon seçimi (üst, orta, alt)
+- ✅ Gerçek zamanlı önizleme
+
+## 🛠️ Teknolojiler
+
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **@napi-rs/canvas** - Canvas rendering
+- **Jimp** - Image processing
+- **Vercel** - Deployment
+
+## 📦 Kurulum
 
 ```bash
+# Bağımlılıkları yükleyin
+npm install
+
+# Geliştirme sunucusunu başlatın
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tarayıcınızda [http://localhost:3000](http://localhost:3000) açın.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🌐 API Kullanımı
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### POST `/api/text-overlay`
 
-## Learn More
+**Request Body:**
+```json
+{
+  "imageUrl": "https://example.com/image.jpg",
+  "text": "Merhaba Dünya 🎉",
+  "fontSize": 64,
+  "fontColor": "white",
+  "position": "bottom",
+  "textAlign": "center",
+  "enableBackground": true,
+  "backgroundColor": "#000000",
+  "backgroundOpacity": 0.6,
+  "enableStroke": true,
+  "strokeColor": "#000000",
+  "strokeWidth": 3,
+  "enableShadow": true,
+  "shadowBlur": 8,
+  "shadowOffsetX": 2,
+  "shadowOffsetY": 2,
+  "padding": 40
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Response:**
+- PNG image (binary data)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### cURL Örneği
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+curl -X POST https://your-domain.vercel.app/api/text-overlay \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageUrl": "https://picsum.photos/800/600",
+    "text": "Merhaba Dünya 🎉",
+    "fontSize": 64
+  }' \
+  --output result.png
+```
 
-## Deploy on Vercel
+## 🔐 API Key (Opsiyonel)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Güvenlik için API key eklemek isterseniz:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. `.env.local` dosyası oluşturun:
+```env
+API_SECRET_KEY=your-secret-key-here
+```
+
+2. Request header'ına ekleyin:
+```bash
+curl -X POST https://your-domain.vercel.app/api/text-overlay \
+  -H "x-api-key: your-secret-key-here" \
+  -H "Content-Type: application/json" \
+  ...
+```
+
+## 🎨 Font'lar
+
+Proje 3 font kullanır:
+- **Roboto Bold** - Ana font
+- **DejaVu Sans Bold** - Fallback
+- **Noto Color Emoji** - Emoji desteği
+
+Font'lar `public/fonts/` klasöründe bulunur.
+
+## 📝 Parametreler
+
+| Parametre | Tip | Varsayılan | Açıklama |
+|-----------|-----|------------|----------|
+| `imageUrl` | string | - | Görsel URL'i (zorunlu) |
+| `text` | string | - | Eklenecek metin (zorunlu) |
+| `fontSize` | number | 64 | Font boyutu (20-150) |
+| `fontColor` | string | "white" | Yazı rengi (white/black) |
+| `position` | string | "bottom" | Pozisyon (top/center/bottom) |
+| `textAlign` | string | "center" | Hizalama (left/center/right) |
+| `enableBackground` | boolean | true | Arka plan aktif |
+| `backgroundColor` | string | "#000000" | Arka plan rengi (hex) |
+| `backgroundOpacity` | number | 0.6 | Arka plan opaklık (0-1) |
+| `enableStroke` | boolean | true | Kenarlık aktif |
+| `strokeColor` | string | "#000000" | Kenarlık rengi (hex) |
+| `strokeWidth` | number | 3 | Kenarlık kalınlığı (1-10) |
+| `enableShadow` | boolean | true | Gölge aktif |
+| `shadowBlur` | number | 8 | Gölge bulanıklık (0-30) |
+| `shadowOffsetX` | number | 2 | Gölge X offset (-20 - 20) |
+| `shadowOffsetY` | number | 2 | Gölge Y offset (-20 - 20) |
+| `padding` | number | 40 | İç boşluk (10-100) |
+
+## 🚀 Deploy
+
+```bash
+# Vercel'e deploy
+vercel --prod
+```
+
+## 📄 Lisans
+
+MIT
+
+## 👤 Geliştirici
+
+[@bahadirtortop](https://github.com/bahadirtortop)
