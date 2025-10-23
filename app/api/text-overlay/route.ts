@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       imageUrl,
       text,
       position = 'bottom',
-      fontSize = 64,
+      fontSize = 32,
       fontColor = 'white',
       backgroundColor = '#000000',
       backgroundOpacity = 0.6,
