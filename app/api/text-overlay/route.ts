@@ -46,6 +46,7 @@ interface RequestBody {
   text: string;
   position?: "top" | "center" | "bottom";
   fontSize?: number;
+  autoFontSize?: boolean;
   fontColor?: "white" | "black";
   backgroundColor?: string;
   backgroundOpacity?: number;
@@ -60,6 +61,59 @@ interface RequestBody {
   shadowOffsetY?: number;
   padding?: number;
   textAlign?: "left" | "center" | "right";
+}
+
+// Calculate font size based on image aspect ratio
+// Calculate font size based on image aspect ratio
+function calculateFontSize(width: number, height: number, baseSize: number, autoFontSize: boolean): number {
+  const aspectRatio = width / height;
+  let multiplier = 1;
+  let aspectType = '';
+
+  // 16:9 (landscape - widescreen)
+  if (aspectRatio >= 1.7) {
+    multiplier = 1.2;
+    aspectType = '16:9 (widescreen)';
+  }
+  // 4:3 (landscape)
+  else if (aspectRatio >= 1.2) {
+    multiplier = 1.1;
+    aspectType = '4:3 (landscape)';
+  }
+  // 1:1 (square)
+  else if (aspectRatio >= 0.9 && aspectRatio <= 1.1) {
+    multiplier = 1.0;
+    aspectType = '1:1 (square)';
+  }
+  // 9:16 (portrait - vertical)
+  else if (aspectRatio >= 0.5) {
+    multiplier = 0.8;
+    aspectType = '9:16 (portrait)';
+  }
+  // 9:19 (very tall)
+  else {
+    multiplier = 0.6;
+    aspectType = '9:19+ (very tall)';
+  }
+
+  if (autoFontSize) {
+    const calculatedSize = Math.round(baseSize * multiplier);
+    console.log(`Aspect ratio: ${aspectType} - Font multiplier: ${multiplier}x`);
+    console.log(`Original font size: ${baseSize}px, Calculated: ${calculatedSize}px`);
+    return calculatedSize;
+  }
+
+  return baseSize;
+}
+
+// Dinamik default font size hesapla
+function getDefaultFontSize(width: number, height: number): number {
+  // Görsel boyutunun %20'si font size olacak (ölçeklenebilir)
+  const minDimension = Math.min(width, height);
+  const calculatedSize = Math.round(minDimension * 0.15); // %15
+  
+  // Min 32px, Max 120px
+  return Math.max(32, Math.min(calculatedSize, 120));
 }
 
 export async function POST(req: NextRequest) {
@@ -83,7 +137,8 @@ export async function POST(req: NextRequest) {
       imageUrl,
       text,
       position = 'bottom',
-      fontSize = 32,
+      fontSize = 64,
+      autoFontSize = false,
       fontColor = 'white',
       backgroundColor = '#000000',
       backgroundOpacity = 0.6,
@@ -107,14 +162,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Loading image from:', imageUrl);
+    console.log('Loading image...');
     console.log('Text to render:', text);
 
     const image = await Jimp.read(imageUrl);
     const width = image.bitmap.width;
     const height = image.bitmap.height;
+    const aspectRatio = (width / height).toFixed(2);
 
-    console.log('Image loaded:', width, 'x', height);
+    console.log(`Image loaded: ${width}x${height} (aspect ratio: ${aspectRatio})`);
+
+    // Calculate font size based on image aspect ratio
+    const finalFontSize = calculateFontSize(width, height, fontSize, autoFontSize);
 
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
@@ -128,7 +187,6 @@ export async function POST(req: NextRequest) {
     // Build font stack with emoji support
     let fontFamily = 'Roboto, "Noto Color Emoji", "DejaVu Sans", sans-serif';
     
-    // Prioritize based on what's available
     if (fontFamilyNames.includes('Roboto') && fontFamilyNames.includes('Noto Color Emoji')) {
       fontFamily = 'Roboto, "Noto Color Emoji", sans-serif';
     } else if (fontFamilyNames.includes('DejaVu Sans') && fontFamilyNames.includes('Noto Color Emoji')) {
@@ -139,7 +197,7 @@ export async function POST(req: NextRequest) {
       fontFamily = '"DejaVu Sans", sans-serif';
     }
     
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    ctx.font = `bold ${finalFontSize}px ${fontFamily}`;
     ctx.textBaseline = 'top';
 
     console.log('Font set:', ctx.font);
@@ -174,7 +232,7 @@ export async function POST(req: NextRequest) {
 
     console.log('Text wrapped into', lines.length, 'lines:', lines);
 
-    const lineHeight = fontSize * 1.3;
+    const lineHeight = finalFontSize * 1.3;
     const totalTextHeight = lines.length * lineHeight;
     
     let maxLineWidth = 0;

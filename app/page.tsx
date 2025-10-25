@@ -6,6 +6,7 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState('https://euhcjhewpsfkqnouslxj.supabase.co/storage/v1/object/public/generated_images/post-64-1760967875705.jpeg');
   const [text, setText] = useState('Merhaba Dünya 🎉');
   const [fontSize, setFontSize] = useState(64);
+  const [autoFontSize, setAutoFontSize] = useState(false);
   const [fontColor, setFontColor] = useState<'white' | 'black'>('white');
   const [position, setPosition] = useState<'top' | 'center' | 'bottom'>('bottom');
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
@@ -27,9 +28,47 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imageInfo, setImageInfo] = useState<{ width: number; height: number; ratio: string; recommendedSize: number } | null>(null);
 
   const [sliderTrigger, setSliderTrigger] = useState(0);
   const isDraggingRef = useRef(false);
+
+  // Calculate recommended font size based on image dimensions
+  const getRecommendedFontSize = (width: number, height: number): number => {
+    const minDimension = Math.min(width, height);
+    const recommended = Math.round(minDimension * 0.15);
+    return Math.max(32, Math.min(recommended, 120));
+  };
+
+  // Load image info when URL changes
+  useEffect(() => {
+    if (!imageUrl || imageUrl.startsWith('data:')) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      const ratio = (img.width / img.height).toFixed(2);
+      const recommended = getRecommendedFontSize(img.width, img.height);
+      
+      setImageInfo({
+        width: img.width,
+        height: img.height,
+        ratio,
+        recommendedSize: recommended
+      });
+      
+      console.log(`Image loaded: ${img.width}x${img.height} (ratio: ${ratio})`);
+      console.log(`Recommended font size: ${recommended}px`);
+    };
+    
+    img.onerror = () => {
+      console.error('Failed to load image');
+      setImageInfo(null);
+    };
+    
+    img.src = imageUrl;
+  }, [imageUrl]);
 
   // Generate image function
   const generateImage = async () => {
@@ -48,6 +87,7 @@ export default function Home() {
           imageUrl,
           text,
           fontSize,
+          autoFontSize,
           fontColor,
           position,
           textAlign,
@@ -90,6 +130,8 @@ export default function Home() {
   }, [
     imageUrl,
     text, 
+    fontSize,
+    autoFontSize,
     fontColor, 
     position, 
     textAlign, 
@@ -151,6 +193,22 @@ export default function Home() {
               }}
               placeholder="https://example.com/image.jpg"
             />
+            {imageInfo && (
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '8px', 
+                backgroundColor: '#f0fdf4', 
+                borderRadius: '6px',
+                fontSize: '11px',
+                color: '#166534'
+              }}>
+                <strong>Görsel Info:</strong>
+                <br />
+                {imageInfo.width}x{imageInfo.height}px | Oran: {imageInfo.ratio}
+                <br />
+                ✓ Önerilen: {imageInfo.recommendedSize}px
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: '15px' }}>
@@ -177,7 +235,7 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', fontSize: '13px' }}>
-                📏 Boyut: {fontSize}px
+                📏 Boyut: {fontSize}px {autoFontSize && '(Otomatik)'}
               </label>
               <input
                 type="range"
@@ -187,7 +245,8 @@ export default function Home() {
                 onChange={(e) => handleSliderChange(setFontSize, Number(e.target.value))}
                 onMouseUp={handleSliderRelease}
                 onTouchEnd={handleSliderRelease}
-                style={{ width: '100%' }}
+                disabled={autoFontSize}
+                style={{ width: '100%', opacity: autoFontSize ? 0.5 : 1 }}
               />
             </div>
 
@@ -206,6 +265,52 @@ export default function Home() {
                 style={{ width: '100%' }}
               />
             </div>
+          </div>
+
+          {/* Auto Font Size Toggle */}
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '10px', 
+              backgroundColor: autoFontSize ? '#e3f2fd' : '#f5f5f5', 
+              borderRadius: '6px', 
+              border: '1px solid #ddd',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={autoFontSize} 
+                onChange={(e) => setAutoFontSize(e.target.checked)} 
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
+              />
+              <span style={{ fontWeight: '600', fontSize: '13px' }}>
+                🎯 Görsel Oranına Göre Font Boyutu
+              </span>
+            </label>
+            {autoFontSize && (
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '8px', 
+                backgroundColor: '#f0fdf4', 
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#166534'
+              }}>
+                <strong>Oranlar:</strong>
+                <br />
+                • 16:9 (geniş): 1.2x
+                <br />
+                • 4:3: 1.1x
+                <br />
+                • 1:1 (kare): 1.0x
+                <br />
+                • 9:16 (dikey): 0.8x
+                <br />
+                • 9:19+ (çok dikey): 0.6x
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '15px' }}>
@@ -509,7 +614,8 @@ export default function Home() {
                     borderRadius: '8px',
                     textDecoration: 'none',
                     fontWeight: '600',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    cursor: 'pointer'
                   }}
                 >
                   💾 İndir
